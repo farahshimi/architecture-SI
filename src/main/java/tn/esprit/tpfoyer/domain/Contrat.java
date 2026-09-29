@@ -25,4 +25,13 @@ public class Contrat {
     private BigDecimal montantTotal;
 
     private boolean valide;
+    @OneToOne
+    @JoinColumn(name = "reservation_id")
+    private Reservation reservation;
+    @OneToOne
+    @JoinColumn(name = "client_id")
+    private Client client;
+
+    @OneToOne(mappedBy = "contrat")
+    private Paiement paiement;
 }
