@@ -1,5 +1,7 @@
+
 package tn.esprit.tpfoyer.domain;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -8,6 +10,8 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -25,13 +29,20 @@ public class Contrat {
     private BigDecimal montantTotal;
 
     private boolean valide;
+
     @OneToOne
     @JoinColumn(name = "reservation_id")
     private Reservation reservation;
+
     @OneToOne
     @JoinColumn(name = "client_id")
     private Client client;
 
-    @OneToOne(mappedBy = "contrat")
-    private Paiement paiement;
+    @OneToMany(
+            mappedBy = "contrat",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    @JsonManagedReference("contrat-paiements")
+    private List<Paiement> paiements = new ArrayList<>();
 }

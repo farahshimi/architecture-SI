@@ -1,5 +1,7 @@
+
 package tn.esprit.tpfoyer.domain;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -27,8 +29,8 @@ public class Paiement {
     @Enumerated(EnumType.STRING)
     private ModePaiement modePaiement;
 
-    @OneToOne
-    @JoinColumn (name = "contrat_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "contrat_id")
+    @JsonBackReference("contrat-paiements")
     private Contrat contrat;
-
 }
