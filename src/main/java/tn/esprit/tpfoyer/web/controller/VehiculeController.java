@@ -1,4 +1,3 @@
-
 package tn.esprit.tpfoyer.web.controller;
 
 import lombok.RequiredArgsConstructor;
@@ -11,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 import tn.esprit.tpfoyer.domain.Vehicule;
 import tn.esprit.tpfoyer.service.IVehiculeService;
+import tn.esprit.tpfoyer.web.dto.VehiculeDTO;
 
 import java.util.List;
 
@@ -54,6 +54,7 @@ public class VehiculeController {
     public Vehicule update(
             @PathVariable Long id,
             @RequestBody Vehicule vehicule) {
+
         return vehiculeService.update(id, vehicule);
     }
 
@@ -64,5 +65,37 @@ public class VehiculeController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
         vehiculeService.deleteById(id);
+    }
+
+    // SERVICE 2 - Affecter un véhicule à un équipement
+
+    @Operation(summary = "Affecter un véhicule à un équipement")
+    @ApiResponse(responseCode = "200", description = "Affectation réussie")
+    @ApiResponse(responseCode = "404", description = "Véhicule ou équipement introuvable")
+    @PutMapping("/{idVehicule}/affecter-equipement")
+    public VehiculeDTO affecterVehiculeAEquipement(
+            @PathVariable Long idVehicule,
+            @RequestParam Long idEquipement) {
+
+        return vehiculeService.affecterVehiculeAEquipement(
+                idVehicule,
+                idEquipement
+        );
+    }
+
+    // SERVICE 3 - Affecter une maintenance à un véhicule
+
+    @Operation(summary = "Affecter une maintenance à un véhicule")
+    @ApiResponse(responseCode = "200", description = "Affectation réussie")
+    @ApiResponse(responseCode = "400", description = "Maintenance ou véhicule introuvable")
+    @PutMapping("/affecter-maintenance")
+    public VehiculeDTO affecterMaintenanceAvehicule(
+            @RequestParam String description,
+            @RequestParam String immatriculation) {
+
+        return vehiculeService.affecterMaintenanceAvehicule(
+                description,
+                immatriculation
+        );
     }
 }

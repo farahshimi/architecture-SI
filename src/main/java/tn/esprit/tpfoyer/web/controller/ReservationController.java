@@ -11,10 +11,15 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 import tn.esprit.tpfoyer.domain.Reservation;
 import tn.esprit.tpfoyer.service.IReservationService;
+import tn.esprit.tpfoyer.web.dto.ReservationResponseDTO;
+import tn.esprit.tpfoyer.web.dto.ReservationWithContratRequestDTO;
 
 import java.util.List;
 
-@Tag(name = "Réservations", description = "API de gestion des réservations")
+@Tag(
+        name = "Réservations",
+        description = "API de gestion des réservations"
+)
 @RestController
 @RequestMapping("/api/reservations")
 @RequiredArgsConstructor
@@ -22,6 +27,7 @@ public class ReservationController {
 
     private final IReservationService reservationService;
 
+    // READ ALL
     @Operation(summary = "Lister toutes les réservations")
     @ApiResponse(responseCode = "200", description = "Liste des réservations")
     @GetMapping
@@ -29,6 +35,7 @@ public class ReservationController {
         return reservationService.findAll();
     }
 
+    // READ ONE
     @Operation(summary = "Consulter une réservation par ID")
     @ApiResponse(responseCode = "200", description = "Réservation trouvée")
     @ApiResponse(responseCode = "404", description = "Réservation introuvable")
@@ -37,6 +44,7 @@ public class ReservationController {
         return reservationService.findById(id);
     }
 
+    // CREATE
     @Operation(summary = "Créer une réservation")
     @ApiResponse(responseCode = "201", description = "Réservation créée")
     @ApiResponse(responseCode = "400", description = "Données invalides")
@@ -46,6 +54,7 @@ public class ReservationController {
         return reservationService.create(reservation);
     }
 
+    // UPDATE
     @Operation(summary = "Modifier une réservation")
     @ApiResponse(responseCode = "200", description = "Réservation modifiée")
     @ApiResponse(responseCode = "400", description = "Données invalides")
@@ -54,9 +63,11 @@ public class ReservationController {
     public Reservation update(
             @PathVariable Long id,
             @RequestBody Reservation reservation) {
+
         return reservationService.update(id, reservation);
     }
 
+    // DELETE
     @Operation(summary = "Supprimer une réservation")
     @ApiResponse(responseCode = "204", description = "Réservation supprimée")
     @ApiResponse(responseCode = "404", description = "Réservation introuvable")
@@ -64,5 +75,34 @@ public class ReservationController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
         reservationService.deleteById(id);
+    }
+
+    // ATELIER 7 - SERVICE 1
+    @Operation(summary = "Affecter une réservation à un client")
+    @ApiResponse(responseCode = "200", description = "Affectation réussie")
+    @PutMapping("/{idReservation}/affecter-client")
+    public ReservationResponseDTO affecterReservationAClient(
+            @PathVariable Long idReservation,
+            @RequestParam String nom,
+            @RequestParam String prenom) {
+
+        return reservationService.affecterReservationAClient(
+                idReservation, nom, prenom
+        );
+    }
+
+    // ATELIER 7 - SERVICE 5
+    @Operation(
+            summary = "Créer une réservation et son contrat associé",
+            description = "Crée une réservation et un contrat dans une seule transaction"
+    )
+    @ApiResponse(responseCode = "201", description = "Réservation et contrat créés")
+    @ApiResponse(responseCode = "400", description = "Données invalides")
+    @PostMapping("/avec-contrat")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ReservationResponseDTO creerReservationEtContratAssocie(
+            @RequestBody ReservationWithContratRequestDTO requestDTO) {
+
+        return reservationService.creerReservationEtContratAssocie(requestDTO);
     }
 }

@@ -1,12 +1,14 @@
+
 package tn.esprit.tpfoyer.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import java.util.List;
 
+import java.util.List;
 import java.math.BigDecimal;
 
 @Entity
@@ -42,23 +44,22 @@ public class Vehicule {
     private StatutVehicule statut;
 
     @ManyToOne
-    @JoinColumn(name ="agence_id")
+    @JoinColumn(name = "agence_id")
     private Agence agence;
 
+    // Prevent infinite JSON recursion
+    @JsonIgnore
     @OneToMany(mappedBy = "vehicule")
     private List<Maintenance> maintenances;
 
     @ManyToMany
     @JoinTable(
             name = "vehicule_equipment",
-            joinColumns =@JoinColumn(name ="vehicule_id"),
-            inverseJoinColumns =@JoinColumn(name ="equipment_id")
-
+            joinColumns = @JoinColumn(name = "vehicule_id"),
+            inverseJoinColumns = @JoinColumn(name = "equipment_id")
     )
     private List<Equipement> equipements;
 
     @OneToMany(mappedBy = "vehicule")
     private List<Reservation> reservations;
-
-
 }

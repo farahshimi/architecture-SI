@@ -7,10 +7,16 @@ import org.springframework.transaction.annotation.Transactional;
 
 import tn.esprit.tpfoyer.domain.Contrat;
 import tn.esprit.tpfoyer.domain.Paiement;
+import tn.esprit.tpfoyer.domain.Reservation;
 import tn.esprit.tpfoyer.exception.ResourceNotFoundException;
+
 import tn.esprit.tpfoyer.repository.IContratRepository;
+import tn.esprit.tpfoyer.repository.IReservationRepository;
+
+import tn.esprit.tpfoyer.web.dto.ContratDTO;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -18,6 +24,7 @@ import java.util.List;
 public class ContratServiceImpl implements IContratService {
 
     private final IContratRepository contratRepository;
+    private final IReservationRepository reservationRepository;
 
     // CREATE
     @Override
@@ -32,14 +39,12 @@ public class ContratServiceImpl implements IContratService {
 
         verifierMontant(contrat);
 
-        // Associer chaque paiement au contrat
         if (contrat.getPaiements() != null) {
             for (Paiement paiement : contrat.getPaiements()) {
                 paiement.setContrat(contrat);
             }
         }
 
-        // Enregistrer le contrat et ses paiements
         return contratRepository.save(contrat);
     }
 
@@ -77,7 +82,6 @@ public class ContratServiceImpl implements IContratService {
     }
 
     // DELETE WITH CASCADE
-
     @Override
     @Transactional
     public void deleteById(Long id) {
@@ -92,6 +96,52 @@ public class ContratServiceImpl implements IContratService {
         contratRepository.delete(contrat);
     }
 
+    // SERVICE 4 - Affecter un contrat à une réservation
+    @Override
+    @Transactional
+    public ContratDTO affecterContratAReservation(
+            LocalDate dateSignature,
+            LocalDate dateDebut,
+            LocalDate dateFin) {
+
+        Reservation reservation = reservationRepository
+                .findFirstByDateDebutAndDateFin(dateDebut, dateFin)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Aucune réservation trouvée pour ces dates"
+                        )
+                );
+
+        if (reservation.getContrat() != null) {
+            throw new IllegalArgumentException(
+                    "Cette réservation possède déjà un contrat"
+            );
+        }
+
+        Contrat contrat = contratRepository
+                .findFirstByDateSignatureAndReservationIsNull(dateSignature)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Aucun contrat disponible pour cette date de signature"
+                        )
+                );
+
+        contrat.setReservation(reservation);
+        contrat.setClient(reservation.getClient());
+
+        Contrat saved = contratRepository.save(contrat);
+
+        return new ContratDTO(
+                saved.getIdContrat(),
+                saved.getDateSignature(),
+                saved.getMontantTotal(),
+                saved.isValide(),
+                saved.getReservation().getIdReservation(),
+                saved.getClient() != null
+                        ? saved.getClient().getIdClient()
+                        : null
+        );
+    }
 
     // VALIDATION
     private void verifierMontant(Contrat contrat) {

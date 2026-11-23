@@ -3,6 +3,7 @@ package tn.esprit.tpfoyer.web.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,7 +12,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 import tn.esprit.tpfoyer.domain.Contrat;
 import tn.esprit.tpfoyer.service.IContratService;
+import tn.esprit.tpfoyer.web.dto.ContratDTO;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Tag(
@@ -25,7 +28,7 @@ public class ContratController {
 
     private final IContratService contratService;
 
-    // CREATE - POST - 201 Created
+    // CREATE
     @Operation(
             summary = "Créer un contrat",
             description = "Enregistre un nouveau contrat"
@@ -38,7 +41,7 @@ public class ContratController {
         return contratService.create(contrat);
     }
 
-    // READ ONE - GET - 200 OK
+    // READ ONE
     @Operation(
             summary = "Rechercher un contrat par ID",
             description = "Retourne un contrat à partir de son identifiant"
@@ -50,7 +53,7 @@ public class ContratController {
         return contratService.findById(id);
     }
 
-    // READ ALL - GET - 200 OK
+    // READ ALL
     @Operation(
             summary = "Lister tous les contrats",
             description = "Retourne la liste de tous les contrats enregistrés"
@@ -61,7 +64,7 @@ public class ContratController {
         return contratService.findAll();
     }
 
-    // UPDATE - PUT - 200 OK
+    // UPDATE
     @Operation(
             summary = "Modifier un contrat",
             description = "Met à jour un contrat existant"
@@ -77,7 +80,7 @@ public class ContratController {
         return contratService.update(id, contrat);
     }
 
-    // DELETE - 204 No Content
+    // DELETE
     @Operation(
             summary = "Supprimer un contrat",
             description = "Supprime un contrat à partir de son identifiant"
@@ -88,5 +91,33 @@ public class ContratController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteById(@PathVariable Long id) {
         contratService.deleteById(id);
+    }
+
+    // SERVICE 4 - Affecter un contrat à une réservation
+    @Operation(
+            summary = "Affecter un contrat à une réservation",
+            description = "Associe un contrat existant à une réservation selon les dates"
+    )
+    @ApiResponse(responseCode = "200", description = "Affectation réussie")
+    @ApiResponse(responseCode = "400", description = "Contrat ou réservation introuvable")
+    @PutMapping("/affecter-reservation")
+    public ContratDTO affecterContratAReservation(
+            @RequestParam
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate dateSignature,
+
+            @RequestParam
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate dateDebut,
+
+            @RequestParam
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate dateFin) {
+
+        return contratService.affecterContratAReservation(
+                dateSignature,
+                dateDebut,
+                dateFin
+        );
     }
 }

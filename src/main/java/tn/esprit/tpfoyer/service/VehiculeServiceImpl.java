@@ -1,12 +1,24 @@
+
 package tn.esprit.tpfoyer.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import tn.esprit.tpfoyer.domain.Vehicule;
+import tn.esprit.tpfoyer.domain.Equipement;
+import tn.esprit.tpfoyer.domain.Maintenance;
+
 import tn.esprit.tpfoyer.exception.ResourceNotFoundException;
+
 import tn.esprit.tpfoyer.repository.IVehiculeRepository;
+import tn.esprit.tpfoyer.repository.IEquipementRepository;
+import tn.esprit.tpfoyer.repository.IMaintenanceRepository;
+
+import tn.esprit.tpfoyer.web.dto.VehiculeDTO;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -14,6 +26,10 @@ import java.util.List;
 public class VehiculeServiceImpl implements IVehiculeService {
 
     private final IVehiculeRepository vehiculeRepository;
+    private final IEquipementRepository equipementRepository;
+    private final IMaintenanceRepository maintenanceRepository;
+
+    // CRUD - CREATE
 
     @Override
     public Vehicule create(Vehicule vehicule) {
@@ -27,6 +43,8 @@ public class VehiculeServiceImpl implements IVehiculeService {
         return vehiculeRepository.save(vehicule);
     }
 
+    // CRUD - READ
+
     @Override
     public Vehicule findById(Long id) {
         return vehiculeRepository.findById(id)
@@ -39,6 +57,8 @@ public class VehiculeServiceImpl implements IVehiculeService {
     public List<Vehicule> findAll() {
         return vehiculeRepository.findAll();
     }
+
+    // CRUD - UPDATE
 
     @Override
     public Vehicule update(Long id, Vehicule vehicule) {
@@ -56,6 +76,8 @@ public class VehiculeServiceImpl implements IVehiculeService {
         return vehiculeRepository.save(existant);
     }
 
+    // CRUD - DELETE
+
     @Override
     public void deleteById(Long id) {
         if (!vehiculeRepository.existsById(id)) {
@@ -64,6 +86,96 @@ public class VehiculeServiceImpl implements IVehiculeService {
 
         vehiculeRepository.deleteById(id);
     }
+
+    // SERVICE 2 - Affecter un véhicule à un équipement
+
+    @Override
+    @Transactional
+    public VehiculeDTO affecterVehiculeAEquipement(
+            Long idVehicule,
+            Long idEquipement) {
+
+        Vehicule vehicule = findById(idVehicule);
+
+        Equipement equipement = equipementRepository.findById(idEquipement)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Equipement", idEquipement
+                        )
+                );
+
+        if (vehicule.getEquipements() == null) {
+            vehicule.setEquipements(new ArrayList<>());
+        }
+
+        boolean dejaAffecte = vehicule.getEquipements()
+                .stream()
+                .anyMatch(e -> e.getIdEquipement().equals(idEquipement));
+
+        if (!dejaAffecte) {
+            vehicule.getEquipements().add(equipement);
+        }
+
+        Vehicule saved = vehiculeRepository.save(vehicule);
+
+        return convertirEnDTO(saved);
+    }
+
+    // SERVICE 3 - Affecter une maintenance à un véhicule
+
+    @Override
+    @Transactional
+    public VehiculeDTO affecterMaintenanceAvehicule(
+            String description,
+            String immatriculation) {
+
+        Maintenance maintenance = maintenanceRepository
+                .findFirstByDescription(description)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Maintenance introuvable : " + description
+                        )
+                );
+
+        Vehicule vehicule = vehiculeRepository
+                .findByImmatriculation(immatriculation)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Véhicule introuvable : " + immatriculation
+                        )
+                );
+
+        maintenance.setVehicule(vehicule);
+
+        maintenanceRepository.save(maintenance);
+
+        return convertirEnDTO(vehicule);
+    }
+
+    // Convertir un véhicule en DTO
+
+    private VehiculeDTO convertirEnDTO(Vehicule vehicule) {
+
+        List<Long> idsEquipements = vehicule.getEquipements() == null
+                ? new ArrayList<>()
+                : vehicule.getEquipements()
+                .stream()
+                .map(Equipement::getIdEquipement)
+                .toList();
+
+        return new VehiculeDTO(
+                vehicule.getIdVehicule(),
+                vehicule.getImmatriculation(),
+                vehicule.getMarque(),
+                vehicule.getModele(),
+                vehicule.getCategorie().name(),
+                vehicule.getTarifJournalier(),
+                vehicule.getStatut().name(),
+                idsEquipements
+        );
+    }
+
+    // Validation des données du véhicule
 
     private void verifierVehicule(Vehicule vehicule) {
 
